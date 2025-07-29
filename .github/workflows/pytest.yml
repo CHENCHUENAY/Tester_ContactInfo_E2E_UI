@@ -31,15 +31,16 @@ jobs:
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
-    - name: Install Chrome & ChromeDriver
+    - name: Install Chrome & ChromeDriver (Fixed Version)
       run: |
-       sudo apt update
-       sudo apt install -y google-chrome-stable
-       LATEST=$(curl -sSL https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-       wget https://chromedriver.storage.googleapis.com/${LATEST}/chromedriver_linux64.zip
-       unzip chromedriver_linux64.zip
-       sudo mv chromedriver /usr/local/bin/chromedriver
-       sudo chmod +x /usr/local/bin/chromedriver
+        sudo apt update
+        sudo apt install -y wget unzip
+        wget https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_116.0.5845.96-1_amd64.deb
+        sudo apt install -y ./google-chrome-stable_116.0.5845.96-1_amd64.deb
+        wget https://chromedriver.storage.googleapis.com/116.0.5845.96/chromedriver_linux64.zip
+        unzip chromedriver_linux64.zip
+        sudo mv chromedriver /usr/local/bin/
+        chmod +x /usr/local/bin/chromedriver
 
     - name: Run Tests and Generate HTML Report
       run: |
