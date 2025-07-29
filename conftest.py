@@ -48,24 +48,29 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pages.login_page import LoginPageLocators
 from utils.test_data import LoginData
 
+
 @pytest.fixture(scope="module")
 def setup_teardown():
-    # Create a temp profile directory to avoid session errors
-    user_data_dir = tempfile.mkdtemp()
+    # Create a temp profile directory for Chrome
+    temp_user_dir = tempfile.mkdtemp()
 
-    # Set Chrome options for CI (headless, sandbox, etc.)
+    # Chrome options for headless mode in CI
     options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument(f'--user-data-dir={user_data_dir}')  # Unique temp profile
+    options.add_argument("--headless=new")  # Use new headless mode
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument(f"--user-data-dir={temp_user_dir}")  # Avoid user dir conflicts
+    options.add_argument("--disable-gpu")
 
-    # Launch Chrome
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    # Set up Chrome with those options
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=options
+    )
     driver.implicitly_wait(10)
     driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
 
-    # Login steps
+    # Login before running tests
     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
