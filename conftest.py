@@ -17,24 +17,62 @@ from utils.test_data import LoginData
 
 
 # This fixture opens the browser before each test and closes it after
+# @pytest.fixture(scope="module")
+# def setup_teardown():
+#     # Start Chrome browser using webdriver manager
+#     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+#     driver.maximize_window()
+#
+#     # Open the login page
+#     driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
+#     driver.implicitly_wait(10)
+#
+#     # Log into the app using test data
+#     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
+#     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
+#     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
+#
+#     # Give the driver to the test, then quit after
+#     yield driver
+#     driver.quit()
+
+
+
+
+
+import pytest
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+from pages.login_page import LoginPageLocators
+from utils.test_data import LoginData
+
 @pytest.fixture(scope="module")
 def setup_teardown():
-    # Start Chrome browser using webdriver manager
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    driver.maximize_window()
+    # Setup headless Chrome options for CI
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--user-data-dir=/tmp/chrome-profile")
 
-    # Open the login page
+    # Launch Chrome
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
     driver.implicitly_wait(10)
 
-    # Log into the app using test data
+    # Login before tests
     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
 
-    # Give the driver to the test, then quit after
     yield driver
     driver.quit()
+
+
 
 
 # This adds screenshots to HTML report if a test fails
