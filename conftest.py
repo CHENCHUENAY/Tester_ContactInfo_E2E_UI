@@ -41,27 +41,28 @@ from utils.test_data import LoginData
 
 import pytest
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+
 from pages.login_page import LoginPageLocators
 from utils.test_data import LoginData
 
+import tempfile
+
 @pytest.fixture(scope="module")
 def setup_teardown():
+    # Configure Chrome options for CI
     chrome_options = Options()
+    chrome_options.add_argument("--headless")  # no browser UI
+    chrome_options.add_argument("--no-sandbox")  # prevent sandboxing issues
+    chrome_options.add_argument("--disable-dev-shm-usage")  # fix shared memory crash
+    chrome_options.add_argument("--disable-gpu")  # GPU not needed in headless mode
+    chrome_options.add_argument("--window-size=1920,1080")  # fix some layout bugs
 
-    # Add these options only for GitHub Actions or CI
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
+    # 🔐 Assign unique user data dir each run (this is the key!)
+    chrome_options.add_argument(f"--user-data-dir={tempfile.mkdtemp()}")
 
-    # DO NOT set --user-data-dir, it causes the conflict
-    # chrome_options.add_argument("--user-data-dir=/tmp/whatever") ← remove this
-
-    # Start driver
     driver = webdriver.Chrome(
         service=Service(ChromeDriverManager().install()),
         options=chrome_options
@@ -70,14 +71,13 @@ def setup_teardown():
     driver.implicitly_wait(10)
     driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
 
-    # Log in before tests
+    # Login before test
     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
 
     yield driver
     driver.quit()
-
 
 
 
