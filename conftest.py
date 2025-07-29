@@ -48,30 +48,24 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pages.login_page import LoginPageLocators
 from utils.test_data import LoginData
 
-import tempfile
-
 @pytest.fixture(scope="module")
 def setup_teardown():
-    # Configure Chrome options for CI
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # no browser UI
-    chrome_options.add_argument("--no-sandbox")  # prevent sandboxing issues
-    chrome_options.add_argument("--disable-dev-shm-usage")  # fix shared memory crash
-    chrome_options.add_argument("--disable-gpu")  # GPU not needed in headless mode
-    chrome_options.add_argument("--window-size=1920,1080")  # fix some layout bugs
+    # Setup Chrome options for headless CI environments
+    options = Options()
+    options.add_argument('--headless')  # Run in headless mode
+    options.add_argument('--no-sandbox')  # Needed for CI
+    options.add_argument('--disable-dev-shm-usage')  # Fix shared memory crash
+    options.add_argument('--disable-gpu')  # Avoid GPU in headless
+    options.add_argument('--remote-debugging-port=9222')  # Prevent crash
+    options.add_argument('--disable-software-rasterizer')  # Fix for some CI crashes
 
-    # 🔐 Assign unique user data dir each run (this is the key!)
-    chrome_options.add_argument(f"--user-data-dir={tempfile.mkdtemp()}")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=chrome_options
-    )
+    # Start WebDriver with the options above
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
     driver.implicitly_wait(10)
     driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
 
-    # Login before test
+    # Perform login before yielding
     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
