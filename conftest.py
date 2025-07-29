@@ -1,51 +1,70 @@
+
+
+
+
+import os
 import pytest
+import base64
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
+from pytest_html import extras
 
-# local imports
+# Local imports (these point to elements on the login page and test data)
 from pages.login_page import LoginPageLocators
 from utils.test_data import LoginData
 
 
-
-
-# Fixture for setup and teardown
+# This fixture opens the browser before each test and closes it after
 @pytest.fixture(scope="module")
 def setup_teardown():
-    # Set up the Chrome driver
+    # Start Chrome browser using webdriver manager
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     driver.maximize_window()
-    driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
-    driver.implicitly_wait(10)  # Implicit wait for elements to load
 
+    # Open the login page
+    driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
+    driver.implicitly_wait(10)
+
+    # Log into the app using test data
     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
-    yield driver  # Yield control to the test function
+
+    # Give the driver to the test, then quit after
+    yield driver
     driver.quit()
 
 
+# This adds screenshots to HTML report if a test fails
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    # Wait for the test to finish
+    outcome = yield
+    result = outcome.get_result()
 
+    # Only take screenshot if the test failed
+    if result.when == "call" and result.failed:
+        driver = item.funcargs.get("setup_teardown")
 
+        if driver:
+            # Make sure screenshots folder exists
+            os.makedirs("screenshots", exist_ok=True)
 
+            # Create a filename with the test name and time
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            screenshot_path = f"screenshots/{item.name}_{timestamp}.png"
 
+            # Take the screenshot
+            driver.save_screenshot(screenshot_path)
 
+            # Read the screenshot and convert it to base64
+            with open(screenshot_path, "rb") as image_file:
+                image_base64 = base64.b64encode(image_file.read()).decode()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            # Add the screenshot to the report
+            image_html = f'<img src="data:image/png;base64,{image_base64}" width="400" height="250">'
+            extra = getattr(result, "extra", [])
+            extra.append(extras.html(image_html))
+            result.extra = extra
