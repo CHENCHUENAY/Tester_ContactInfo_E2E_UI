@@ -39,32 +39,38 @@ from utils.test_data import LoginData
 
 
 
-
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-
 from pages.login_page import LoginPageLocators
 from utils.test_data import LoginData
 
 @pytest.fixture(scope="module")
 def setup_teardown():
-    # Setup headless Chrome options for CI
     chrome_options = Options()
+
+    # Add these options only for GitHub Actions or CI
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--user-data-dir=/tmp/chrome-profile")
 
-    # Launch Chrome
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-    driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
+    # DO NOT set --user-data-dir, it causes the conflict
+    # chrome_options.add_argument("--user-data-dir=/tmp/whatever") ← remove this
+
+    # Start driver
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=chrome_options
+    )
+
     driver.implicitly_wait(10)
+    driver.get("https://thinking-tester-contact-list.herokuapp.com/login")
 
-    # Login before tests
+    # Log in before tests
     driver.find_element(*LoginPageLocators.EMAIL_INPUT).send_keys(LoginData.login_email)
     driver.find_element(*LoginPageLocators.PASSWORD_INPUT).send_keys(LoginData.login_password)
     driver.find_element(*LoginPageLocators.SUBMIT_BUTTON).click()
