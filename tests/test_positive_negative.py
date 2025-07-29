@@ -43,7 +43,7 @@ class TestPositiveFlow:
         driver.find_element(*ContactPageLocators.PHONE).send_keys(*PositiveData.gen_phone)
         driver.find_element(*ContactPageLocators.STREET1).send_keys(*PositiveData.street1)
         driver.find_element(*ContactPageLocators.STREET2).send_keys(*PositiveData.street2)
-        driver.find_element(*ContactPageLocators.CITY).send_keys(*PositiveData.cit)         #error
+        driver.find_element(*ContactPageLocators.CITY).send_keys(*PositiveData.city)         
         driver.find_element(*ContactPageLocators.STATE_PROVINCE).send_keys(*PositiveData.stateProvince)
         driver.find_element(*ContactPageLocators.POSTAL_CODE).send_keys(*PositiveData.postalCode)
         driver.find_element(*ContactPageLocators.COUNTRY).send_keys(*PositiveData.country)
